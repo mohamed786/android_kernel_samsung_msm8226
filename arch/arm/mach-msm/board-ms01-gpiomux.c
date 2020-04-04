@@ -42,6 +42,30 @@ static struct gpiomux_setting gpio_home_keys_suspend = {
 	.drv = GPIOMUX_DRV_2MA,
 	.pull = GPIOMUX_PULL_NONE,
 };
+#if defined(CONFIG_TOUCHSCREEN_ZINITIX_BT531)
+static struct gpiomux_setting gpio_i2c_tsp_active_config = {
+	.func = GPIOMUX_FUNC_3,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_UP,
+};
+static struct gpiomux_setting gpio_i2c_tsp_suspend_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_NONE,
+};
+#else
+static struct gpiomux_setting gpio_i2c_tsp_active_config = {
+	.func = GPIOMUX_FUNC_3,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_UP,
+};
+static struct gpiomux_setting gpio_i2c_tsp_suspend_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_DOWN,
+};
+#endif
+
 
 static struct msm_gpiomux_config msm_keypad_configs[] __initdata = {
 	{
@@ -161,11 +185,7 @@ static struct msm_gpiomux_config wcnss_5wire_interface[] = {
 };
 
 /* GPIO i2c configurations */
-static struct gpiomux_setting gpio_i2c_config = {
-	.func = GPIOMUX_FUNC_3,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_NONE,
-};
+
 
 /* Sensor configurations */
 static struct gpiomux_setting sensor_gpio_i2c_config = {
@@ -255,14 +275,14 @@ static struct gpiomux_setting nfc_ven_cfg = {
 static struct gpiomux_setting nfc_irq_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
+	.pull = GPIOMUX_PULL_NONE,
 	.dir = GPIOMUX_IN,
 };
 
 static struct gpiomux_setting nfc_firmware_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
+	.pull = GPIOMUX_PULL_NONE,
 	.dir = GPIOMUX_OUT_LOW,
 };
 
@@ -461,15 +481,15 @@ static struct msm_gpiomux_config msm_blsp_configs[] __initdata = {
 	{
 		.gpio      = 18,		/* BLSP1 QUP5 I2C_SDA */
 		.settings = {
-			[GPIOMUX_ACTIVE] = &gpio_i2c_config,
-			[GPIOMUX_SUSPENDED] = &gpio_i2c_config,
+			[GPIOMUX_ACTIVE] = &gpio_i2c_tsp_active_config,
+			[GPIOMUX_SUSPENDED] = &gpio_i2c_tsp_suspend_config,
 		},
 	},
 	{
 		.gpio      = 19,		/* BLSP1 QUP5 I2C_SCL */
 		.settings = {
-			[GPIOMUX_ACTIVE] = &gpio_i2c_config,
-			[GPIOMUX_SUSPENDED] = &gpio_i2c_config,
+				[GPIOMUX_ACTIVE] = &gpio_i2c_tsp_active_config,
+			[GPIOMUX_SUSPENDED] = &gpio_i2c_tsp_suspend_config,
 		},
 	},
 };
@@ -559,33 +579,21 @@ static struct msm_gpiomux_config msm_csensor_configs[] __initdata = {
 		.gpio = 0, /* CIS_SPI_MOSI */
 		.settings = {
 			[GPIOMUX_ACTIVE]	= &cam_settings[5],
-#if defined(CONFIG_MACH_MS01_EUR_3G)
 			[GPIOMUX_SUSPENDED] = &cam_settings[5],
-#else
-			[GPIOMUX_SUSPENDED] = &cam_settings[8],
-#endif
 		},
 	},
 	{
 		.gpio = 1, /* CIS_SPI_MISO */
 		.settings = {
 			[GPIOMUX_ACTIVE]	= &cam_settings[5],
-#if defined(CONFIG_MACH_MS01_EUR_3G)
 			[GPIOMUX_SUSPENDED] = &cam_settings[5],
-#else
-			[GPIOMUX_SUSPENDED] = &cam_settings[8],
-#endif
 		},
 	},
 	{
 		.gpio = 3, /* CIS_SPI_SCLK */
 		.settings = {
 			[GPIOMUX_ACTIVE]	= &cam_settings[5],
-#if defined(CONFIG_MACH_MS01_EUR_3G)
 			[GPIOMUX_SUSPENDED] = &cam_settings[5],
-#else
-			[GPIOMUX_SUSPENDED] = &cam_settings[8],
-#endif
 		},
 	},
 
@@ -665,7 +673,7 @@ static struct msm_gpiomux_config msm_csensor_configs[] __initdata = {
 		},
 	},
 	{
-#if defined(CONFIG_MACH_MS01_EUR_3G)
+#if defined(CONFIG_MACH_MS01_EUR_3G) || defined(CONFIG_MACH_MS01_EUR_LTE)
 		.gpio = 33, /* AF_SCL */
 #else
 		.gpio = 36, /* AF_SCL */
@@ -730,8 +738,8 @@ static struct msm_gpiomux_config msm_keyboad_cypress_configs[] __initdata = {
 	{
 		.gpio      = 114,		/* 2_TOUCH_I2C_SDA */
 		.settings = {
-			[GPIOMUX_ACTIVE] = &gpio_i2c_tkey_act_config,
-			[GPIOMUX_SUSPENDED] = &gpio_i2c_tkey_sus_config,
+			[GPIOMUX_ACTIVE]    = &cam_settings[3],
+			[GPIOMUX_SUSPENDED] = &cam_settings[4],
 		},
 	},
 };
@@ -979,7 +987,139 @@ static struct msm_gpiomux_config hw_rev_configs[] __initdata = {
 		},
 };
 
+#if defined(CONFIG_MACH_MS01_EUR_LTE)
+static struct gpiomux_setting nc_cfg = {
+        .func = GPIOMUX_FUNC_GPIO,
+        .drv = GPIOMUX_DRV_2MA,
+        .pull = GPIOMUX_PULL_DOWN,
+		.dir = GPIOMUX_IN,
+};
+static struct msm_gpiomux_config nc_configs[] __initdata = {
+	{
+		.gpio = 22,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 23,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 36,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 53,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 54,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 55,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 67,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+};
+#endif
 
+#if defined(CONFIG_MACH_MS01_EUR_3G)
+static struct gpiomux_setting nc_cfg = {
+        .func = GPIOMUX_FUNC_GPIO,
+        .drv = GPIOMUX_DRV_2MA,
+        .pull = GPIOMUX_PULL_DOWN,
+		.dir = GPIOMUX_IN,
+};
+static struct msm_gpiomux_config nc_configs[] __initdata = {
+	{
+		.gpio = 10,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 11,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 20,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 21,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 23,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 36,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 62,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 67,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+	{
+		.gpio = 109,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+			[GPIOMUX_ACTIVE] = &nc_cfg,
+		},
+	},
+};
+#endif
 
 
 /* BERLUTI 3G NC configs */
@@ -988,9 +1128,9 @@ static struct msm_gpiomux_config berluti3g_nc_gpio_cfgs[] __initdata = {
 	NC_GPIO_CONFIG(16),				/* As we will not ESD so ESD pin should be NC */
 #endif
 	NC_GPIO_CONFIG(24),
-	NC_GPIO_CONFIG(53),
-	NC_GPIO_CONFIG(54),
-	NC_GPIO_CONFIG(55),
+//	NC_GPIO_CONFIG(53),
+//	NC_GPIO_CONFIG(54),
+//	NC_GPIO_CONFIG(55),
 #ifndef CONFIG_FB_MSM_MDSS_SHARP_HD_PANEL
 	NC_GPIO_CONFIG(60),
 #endif
@@ -1094,4 +1234,11 @@ void __init msm8226_init_gpiomux(void)
 
 	/* NC */
 	msm_gpiomux_install(berluti3g_nc_gpio_cfgs, ARRAY_SIZE(berluti3g_nc_gpio_cfgs));
+#if defined(CONFIG_MACH_MS01_EUR_3G)
+	msm_gpiomux_install(nc_configs, ARRAY_SIZE(nc_configs));
+#endif
+#if defined(CONFIG_MACH_MS01_EUR_LTE)
+	msm_gpiomux_install(nc_configs, ARRAY_SIZE(nc_configs));
+#endif
 }
+
